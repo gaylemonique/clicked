@@ -43,6 +43,7 @@ const DEFAULT_SETTINGS: EditSettings = {
 };
 
 const PRINT_AGENT_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://localhost:3421/print";
+const PRINT_AGENT_HEALTH_URL = PRINT_AGENT_URL.replace(/\/print\/?$/, "/health");
 
 const wait = (milliseconds: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
@@ -211,6 +212,7 @@ export default function Home() {
   const [shotNumber, setShotNumber] = useState(1);
   const [flash, setFlash] = useState(false);
   const [printError, setPrintError] = useState("");
+  const [printerConnection, setPrinterConnection] = useState<{ status: "checking" | "ready" | "offline"; name?: string }>({ status: "checking" });
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const sequenceRunningRef = useRef(false);
@@ -221,6 +223,29 @@ export default function Home() {
   }, []);
 
   useEffect(() => () => stopCamera(), [stopCamera]);
+
+  useEffect(() => {
+    let active = true;
+    const checkPrinter = async () => {
+      try {
+        const response = await fetch(PRINT_AGENT_HEALTH_URL, { cache: "no-store" });
+        const health = await response.json();
+        if (active) {
+          setPrinterConnection(health?.printer?.ready
+            ? { status: "ready", name: health.printer.name }
+            : { status: "offline" });
+        }
+      } catch {
+        if (active) setPrinterConnection({ status: "offline" });
+      }
+    };
+    void checkPrinter();
+    const poll = window.setInterval(() => void checkPrinter(), 3000);
+    return () => {
+      active = false;
+      window.clearInterval(poll);
+    };
+  }, []);
 
   const openCamera = useCallback(async () => {
     stopCamera();
@@ -362,11 +387,12 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image, width: 384, copies: 1, requestedAt: new Date().toISOString() }),
       });
-      if (!response.ok) throw new Error(`Print agent returned ${response.status}.`);
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error ?? `Print agent returned ${response.status}.`);
       await wait(1000);
       setScreen("complete");
-    } catch {
-      setPrintError("The local print agent did not respond. Check that it is running and the JK-5802H is connected.");
+    } catch (error) {
+      setPrintError(error instanceof Error ? error.message : "The USB thermal printer did not respond.");
       setScreen("preview");
     }
   };
@@ -381,7 +407,11 @@ export default function Home() {
         {screen !== "welcome" && <Progress screen={screen} />}
         {screen !== "welcome" && screen !== "complete" ? (
           <button className="text-button" onClick={startOver}><RotateCcw size={17} /> Start over</button>
-        ) : <span className="kiosk-chip"><span /> Kiosk ready</span>}
+        ) : (
+          <span className={`kiosk-chip is-${printerConnection.status}`} title={printerConnection.name}>
+            <span /> {printerConnection.status === "ready" ? "Printer ready" : printerConnection.status === "checking" ? "Finding printer" : "Connect printer"}
+          </span>
+        )}
       </header>
 
       {screen === "welcome" && (
@@ -390,9 +420,10 @@ export default function Home() {
             <span className="welcome-tag"><Sparkles size={16} /> Instant thermal keepsake</span>
             <h1>MAKE A<br /><em>MOMENT</em><br />YOU CAN HOLD.</h1>
             <p>Pick a strip, strike a pose, and print your photos on a tiny 58mm receipt.</p>
-            <button className="primary-button hero-button" onClick={() => setScreen("layout")}>
-              Start photobooth <ArrowRight size={22} />
+            <button className="primary-button hero-button" disabled={printerConnection.status !== "ready"} onClick={() => setScreen("layout")}>
+              {printerConnection.status === "ready" ? "Start photobooth" : printerConnection.status === "checking" ? "Finding printer…" : "Printer not connected"} <ArrowRight size={22} />
             </button>
+            {printerConnection.status === "offline" && <p className="printer-guidance" role="status">Plug in and switch on the POS-58 printer. This screen unlocks automatically.</p>}
             <div className="welcome-details" aria-label="How it works">
               <span><b>01</b> Choose</span><span><b>02</b> Pose</span><span><b>03</b> Print</span>
             </div>
@@ -505,7 +536,7 @@ export default function Home() {
               <p>Small tweaks only—the thermal look is part of the charm.</p>
             </div>
 
-            {printError && <div className="alert" role="alert"><CircleAlert size={20} /><span><strong>Printer not found</strong>{printError}</span></div>}
+            {printError && <div className="alert" role="alert"><CircleAlert size={20} /><span><strong>Printer not ready</strong>{printError}</span></div>}
 
             <div className="editor-group">
               <h2><SlidersHorizontal size={19} /> Image</h2>

@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently --kill-others-on-fail --names printer,web \"npm:print-agent\" \"next dev\"",
     "build": "next build",
-    "start": "next start",
+    "start": "concurrently --kill-others-on-fail --names printer,web \"npm:print-agent\" \"next start\"",
+    "dev:web": "next dev",
+    "start:web": "next start",
     "lint": "eslint .",
-    "print-agent": "node print-agent/server.mjs"
+    "print-agent": "node print-agent/server.mjs",
+    "test": "node --test print-agent/*.test.mjs"
   },
   "dependencies": {
     "@eslint/eslintrc": "latest",
+    "concurrently": "latest",
     "cors": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",

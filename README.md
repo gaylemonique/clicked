@@ -5,21 +5,19 @@ A full-screen, browser-based thermal photobooth for a locally connected JK-5802H
 ## Run the kiosk
 
 1. Install dependencies with `npm install`.
-2. Start the print agent with `npm run print-agent`.
-3. In a second terminal, start the web app with `npm run dev`.
-4. Open `http://localhost:3000` and allow camera access.
+2. Start everything with `npm run dev`.
+3. Open `http://localhost:3000` and allow camera access.
 
-The print agent defaults to development queue mode and saves printable PNG jobs under `print-agent/jobs`. This makes the entire flow testable before the printer is attached.
+The web app and print agent now start together. The welcome screen unlocks automatically when a supported USB printer is connected and powers on.
 
 ## Connect the JK-5802H
 
-Install the printer's Windows driver and confirm that its own test page prints first. Then set:
+The bundled agent recognizes the connected POS-58 / JK-5802H hardware (`VID_0483:PID_5743`) directly through Windows USB Printing Support. It does not require a Windows printer queue, a browser print dialog, or environment-variable setup.
 
-- `JK5802_PRINT_COMMAND` to the driver's silent command-line printing program or your ESC/POS bridge.
-- `JK5802_PRINT_ARGS` to a JSON array of arguments. Use `{file}` where the generated PNG path belongs.
+At startup and every health check, the agent searches active USB printer interfaces. It converts the 384-dot receipt PNG into ESC/POS raster bytes and writes them to the detected USB interface. Unplugging the printer locks the Start button; plugging it back in unlocks the kiosk within about three seconds.
 
-See `.env.example` for the expected shape. The command is launched directly without a shell. This keeps printer-specific Windows integration isolated from the web app and avoids the browser print dialog.
+`JK5802_PRINT_COMMAND` remains available only as an optional fallback for different printer hardware.
 
 ## Print contract
 
-`POST http://localhost:3421/print` accepts JSON with a 384-dot PNG data URL and exactly one copy. The agent validates, stores, and forwards the job. `GET /health` reports whether a physical printer command is configured.
+`POST http://localhost:3421/print` accepts JSON with a 384-dot PNG data URL and exactly one copy. `GET /health` reports live USB detection, readiness, printer identity, and connection mode.

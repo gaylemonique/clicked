@@ -95,6 +95,9 @@ input:focus-visible {
   box-shadow: 0 0 0 3px oklch(0.89 0.05 152);
 }
 
+.kiosk-chip.is-checking span { background: var(--honey-dark); box-shadow: 0 0 0 3px oklch(0.91 0.05 77); }
+.kiosk-chip.is-offline span { background: var(--error); box-shadow: 0 0 0 3px oklch(0.91 0.04 27); }
+
 .progress {
   list-style: none;
   padding: 0;
@@ -224,6 +227,14 @@ input:focus-visible {
   line-height: 1.5;
   font-weight: 700;
   text-wrap: pretty;
+}
+
+.welcome-copy > .printer-guidance {
+  max-width: 46ch;
+  margin: 13px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-weight: 800;
 }
 
 .welcome-details {
