@@ -3,7 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
 
-const THERMAL_PATTERN = /(?:JK[-\s]?5802|POS[-\s]?58|XP[-\s]?58|ZJ[-\s]?58|58\s?mm|thermal|receipt|xprinter|gprinter)/i;
+const THERMAL_PATTERN = /(?:JK[-\s]?5802|POS[-\s]?(?:58|80)|XP[-\s]?(?:58|80)|ZJ[-\s]?(?:58|80)|(?:58|80)\s?mm|thermal|receipt|xprinter|gprinter|rongta|munbyn|epson\s+tm|star\s+tsp)/i;
 const VIRTUAL_PATTERN = /(?:Microsoft|OneNote|Fax|PDF|XPS|DeskJet|LaserJet|OfficeJet)/i;
 const KNOWN_USB_DEVICES = [
   { vendorId: "0483", productId: "5743", name: "Printer POS-58 / JK-5802H" },
@@ -44,6 +44,21 @@ export function selectThermalPrinter(printers, preferredName = process.env.THERM
   return ranked[0]?.score >= 60 ? ranked[0].printer : null;
 }
 
+export function selectUsbThermalPrinter(devices, preferredId = process.env.THERMAL_USB_ID) {
+  if (preferredId) {
+    const normalized = preferredId.replace(/[^a-f0-9]/gi, "").toUpperCase();
+    return devices.find((device) => `${device.vendorId ?? ""}${device.productId ?? ""}`.toUpperCase() === normalized) ?? null;
+  }
+  const ranked = devices.map((device) => {
+    let score = 0;
+    if (device.known) score += 100;
+    if (THERMAL_PATTERN.test(device.name ?? "")) score += 90;
+    if (VIRTUAL_PATTERN.test(device.name ?? "")) score -= 100;
+    return { device, score };
+  }).sort((a, b) => b.score - a.score);
+  return ranked[0]?.score >= 80 ? ranked[0].device : null;
+}
+
 export async function listWindowsPrinters() {
   if (process.platform !== "win32") return [];
   const script = "Get-CimInstance Win32_Printer | Select-Object Name,DriverName,PortName,PrinterStatus,WorkOffline,Default | ConvertTo-Json -Compress";
@@ -55,32 +70,46 @@ export async function listWindowsPrinters() {
 
 export async function listUsbPrinterInterfaces() {
   if (process.platform !== "win32") return [];
-  const output = await run("powershell.exe", [
-    "-NoProfile",
-    "-NonInteractive",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    usbPrintScript,
-    "-ListOnly",
+  const metadataScript = "Get-CimInstance Win32_PnPEntity | Where-Object { $_.Present -and $_.Service -eq 'usbprint' } | Select-Object Name,DeviceID,Manufacturer,Status | ConvertTo-Json -Compress";
+  const [output, metadataOutput] = await Promise.all([
+    run("powershell.exe", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      usbPrintScript,
+      "-ListOnly",
+    ]),
+    run("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", metadataScript]),
   ]);
   if (!output) return [];
+  const parsedMetadata = metadataOutput ? JSON.parse(metadataOutput) : [];
+  const metadata = Array.isArray(parsedMetadata) ? parsedMetadata : [parsedMetadata];
   return output.split(/\r?\n/).map((devicePath) => {
     const upperPath = devicePath.toUpperCase();
-    const known = KNOWN_USB_DEVICES.find(({ vendorId, productId }) => upperPath.includes(`VID_${vendorId}&PID_${productId}`));
+    const ids = upperPath.match(/VID_([0-9A-F]{4})&PID_([0-9A-F]{4})/);
+    const vendorId = ids?.[1] ?? null;
+    const productId = ids?.[2] ?? null;
+    const known = KNOWN_USB_DEVICES.find((device) => device.vendorId === vendorId && device.productId === productId);
+    const pnp = metadata.find((device) => (device.DeviceID ?? "").toUpperCase().includes(`VID_${vendorId}&PID_${productId}`));
     return {
       path: devicePath,
-      name: known?.name ?? "USB printer",
-      supported: Boolean(known),
-      vendorId: known?.vendorId ?? null,
-      productId: known?.productId ?? null,
+      name: known?.name ?? pnp?.Name ?? "USB printer",
+      manufacturer: pnp?.Manufacturer ?? null,
+      status: pnp?.Status ?? "Unknown",
+      known: Boolean(known),
+      connectionType: "USB printer class",
+      usbId: vendorId && productId ? `${vendorId}:${productId}` : null,
+      vendorId,
+      productId,
     };
   });
 }
 
 export async function discoverPrinter() {
   const usbDevices = await listUsbPrinterInterfaces().catch(() => []);
-  const usbDevice = usbDevices.find((device) => device.supported) ?? null;
+  const usbDevice = selectUsbThermalPrinter(usbDevices);
   if (usbDevice) {
     return { detected: true, ready: true, mode: "usb-direct", name: usbDevice.name, device: usbDevice, queue: null, usbDevices };
   }
@@ -180,7 +209,8 @@ export async function pngToEscPos(pngBuffer) {
 }
 
 export async function writeDirectUsb(dataFile, device) {
-  const match = device?.vendorId && device?.productId ? `VID_${device.vendorId}&PID_${device.productId}` : "VID_0483&PID_5743";
+  if (!device?.vendorId || !device?.productId) throw new Error("The selected USB printer has no usable VID/PID identity.");
+  const match = `VID_${device.vendorId}&PID_${device.productId}`;
   return run("powershell.exe", [
     "-NoProfile",
     "-NonInteractive",

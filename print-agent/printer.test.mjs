@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { autoToneGrayscale, buildEscPosRaster, ditherGrayscale, selectThermalPrinter } from "./printer.mjs";
+import { autoToneGrayscale, buildEscPosRaster, ditherGrayscale, selectThermalPrinter, selectUsbThermalPrinter } from "./printer.mjs";
 
 const hpPrinter = {
   Name: "HP DeskJet 2700 series",
@@ -38,6 +38,22 @@ test("recognizes common generic 58mm thermal queue names", () => {
 
 test("honors an explicit printer override without requiring name heuristics", () => {
   assert.deepEqual(selectThermalPrinter([hpPrinter], "HP DeskJet 2700 series"), hpPrinter);
+});
+
+test("selects a thermal USB interface by its reported device name without a hard-coded VID/PID", () => {
+  const thermal = { name: "POS-80 Receipt Printer", vendorId: "1234", productId: "5678", path: "thermal-path" };
+  const hp = { name: "HP DeskJet 2700 series", vendorId: "03F0", productId: "1853", path: "hp-path" };
+  assert.deepEqual(selectUsbThermalPrinter([hp, thermal]), thermal);
+});
+
+test("does not automatically send thermal data to an unrelated USB printer", () => {
+  const hp = { name: "HP DeskJet 2700 series", vendorId: "03F0", productId: "1853", path: "hp-path" };
+  assert.equal(selectUsbThermalPrinter([hp]), null);
+});
+
+test("allows an unknown thermal model to be selected once by USB identity", () => {
+  const generic = { name: "USB printer", vendorId: "CAFE", productId: "BEEF", path: "generic-path" };
+  assert.deepEqual(selectUsbThermalPrinter([generic], "CAFE:BEEF"), generic);
 });
 
 test("encodes a one-row monochrome image as ESC/POS raster data", () => {
