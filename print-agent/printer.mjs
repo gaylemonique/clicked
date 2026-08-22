@@ -108,6 +108,59 @@ export function buildEscPosRaster(grayscale, width, height) {
   return raster;
 }
 
+export function autoToneGrayscale(grayscale) {
+  const histogram = new Uint32Array(256);
+  let usablePixels = 0;
+  for (const value of grayscale) {
+    if (value > 5 && value < 250) {
+      histogram[value] += 1;
+      usablePixels += 1;
+    }
+  }
+  if (usablePixels === 0) return Buffer.from(grayscale);
+
+  const midpoint = Math.ceil(usablePixels / 2);
+  let running = 0;
+  let median = 128;
+  for (let value = 6; value < 250; value += 1) {
+    running += histogram[value];
+    if (running >= midpoint) {
+      median = value;
+      break;
+    }
+  }
+
+  const targetMedian = 168;
+  const rawGamma = Math.log(targetMedian / 255) / Math.log(Math.max(median, 8) / 255);
+  const gamma = Math.min(1.12, Math.max(0.45, rawGamma));
+  return Buffer.from(Uint8Array.from(grayscale, (value) => {
+    if (value <= 4) return 0;
+    if (value >= 250) return 255;
+    return Math.round(255 * Math.pow(value / 255, gamma));
+  }));
+}
+
+export function ditherGrayscale(grayscale, width, height) {
+  const working = Float32Array.from(grayscale);
+  const output = Buffer.alloc(grayscale.length);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      const oldValue = Math.max(0, Math.min(255, working[index]));
+      const newValue = oldValue < 150 ? 0 : 255;
+      output[index] = newValue;
+      const error = oldValue - newValue;
+      if (x + 1 < width) working[index + 1] += error * (7 / 16);
+      if (y + 1 < height) {
+        if (x > 0) working[index + width - 1] += error * (3 / 16);
+        working[index + width] += error * (5 / 16);
+        if (x + 1 < width) working[index + width + 1] += error * (1 / 16);
+      }
+    }
+  }
+  return output;
+}
+
 export async function pngToEscPos(pngBuffer) {
   const { data, info } = await sharp(pngBuffer)
     .flatten({ background: "#ffffff" })
@@ -115,7 +168,9 @@ export async function pngToEscPos(pngBuffer) {
     .grayscale()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const raster = buildEscPosRaster(data, info.width, info.height);
+  const corrected = autoToneGrayscale(data);
+  const dithered = ditherGrayscale(corrected, info.width, info.height);
+  const raster = buildEscPosRaster(dithered, info.width, info.height);
   return Buffer.concat([
     Buffer.from([0x1b, 0x40]),
     Buffer.from([0x1b, 0x61, 0x01]),

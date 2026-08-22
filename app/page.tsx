@@ -34,8 +34,8 @@ type EditSettings = {
 };
 
 const DEFAULT_SETTINGS: EditSettings = {
-  brightness: 100,
-  contrast: 145,
+  brightness: 108,
+  contrast: 108,
   spacing: 8,
   cropY: 50,
   border: true,
@@ -117,16 +117,6 @@ async function buildReceipt(photos: string[], settings: EditSettings) {
     context.filter = `grayscale(1) brightness(${settings.brightness}%) contrast(${settings.contrast}%)`;
     drawCover(context, image, margin, top, photoWidth, photoHeight, settings.cropY);
     context.restore();
-
-    const pixels = context.getImageData(margin, top, photoWidth, photoHeight);
-    for (let pixel = 0; pixel < pixels.data.length; pixel += 4) {
-      const luminance = pixels.data[pixel] * 0.299 + pixels.data[pixel + 1] * 0.587 + pixels.data[pixel + 2] * 0.114;
-      const threshold = luminance > 142 ? 255 : 0;
-      pixels.data[pixel] = threshold;
-      pixels.data[pixel + 1] = threshold;
-      pixels.data[pixel + 2] = threshold;
-    }
-    context.putImageData(pixels, margin, top);
 
     if (settings.border) {
       context.strokeStyle = "#000";
@@ -540,15 +530,22 @@ export default function Home() {
 
             <div className="editor-group">
               <h2><SlidersHorizontal size={19} /> Image</h2>
-              <label>Contrast <output>{settings.contrast}%</output>
-                <input type="range" min="90" max="220" value={settings.contrast} onChange={(event) => setSettings({ ...settings, contrast: Number(event.target.value) })} />
-              </label>
-              <label>Brightness <output>{settings.brightness}%</output>
-                <input type="range" min="70" max="145" value={settings.brightness} onChange={(event) => setSettings({ ...settings, brightness: Number(event.target.value) })} />
-              </label>
-              <label>Vertical crop <output>{settings.cropY}%</output>
-                <input type="range" min="0" max="100" value={settings.cropY} onChange={(event) => setSettings({ ...settings, cropY: Number(event.target.value) })} />
-              </label>
+              <span className="auto-light-badge"><Sparkles size={15} /> Auto lighting on</span>
+              <p className="auto-light-copy">Shadows and skin tones are balanced automatically for black-and-white thermal paper.</p>
+              <details className="advanced-controls">
+                <summary>Optional manual adjustments</summary>
+                <div>
+                  <label>Contrast <output>{settings.contrast}%</output>
+                    <input type="range" min="80" max="180" value={settings.contrast} onChange={(event) => setSettings({ ...settings, contrast: Number(event.target.value) })} />
+                  </label>
+                  <label>Brightness <output>{settings.brightness}%</output>
+                    <input type="range" min="75" max="145" value={settings.brightness} onChange={(event) => setSettings({ ...settings, brightness: Number(event.target.value) })} />
+                  </label>
+                  <label>Vertical crop <output>{settings.cropY}%</output>
+                    <input type="range" min="0" max="100" value={settings.cropY} onChange={(event) => setSettings({ ...settings, cropY: Number(event.target.value) })} />
+                  </label>
+                </div>
+              </details>
             </div>
 
             <div className="editor-row">

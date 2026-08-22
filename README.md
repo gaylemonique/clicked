@@ -21,3 +21,7 @@ At startup and every health check, the agent searches active USB printer interfa
 ## Print contract
 
 `POST http://localhost:3421/print` accepts JSON with a 384-dot PNG data URL and exactly one copy. `GET /health` reports live USB detection, readiness, printer identity, and connection mode.
+
+## Automatic thermal lighting
+
+The print pipeline preserves grayscale camera detail, analyzes the usable tones in every receipt, lifts underexposed shadows, and applies Floyd–Steinberg dithering before generating ESC/POS raster bytes. True black text and borders remain solid. Brightness and contrast controls remain available under optional adjustments, but guests do not need to configure them for normal use.

@@ -503,6 +503,14 @@ input:focus-visible {
 
 .editor-group { max-width: 760px; border-top: 2px solid var(--ink); padding: 15px 0 18px; }
 .editor-group h2 { margin: 0 0 18px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.auto-light-badge { display: inline-flex; align-items: center; gap: 7px; margin: -7px 0 8px; padding: 7px 9px; border-radius: 999px; background: oklch(0.91 0.05 77); color: var(--ink); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+.auto-light-copy { max-width: 62ch; margin: 0 0 13px; color: var(--muted); font-size: 0.82rem; font-weight: 700; line-height: 1.45; }
+.advanced-controls { border: 2px solid oklch(0.75 0.015 255); border-radius: 10px; background: var(--white); }
+.advanced-controls summary { min-height: 43px; padding: 11px 13px; cursor: pointer; font-size: 0.78rem; font-weight: 900; }
+.advanced-controls > div { padding: 0 13px 10px; }
+.advanced-controls label { display: grid; grid-template-columns: 1fr auto; gap: 7px 14px; align-items: center; margin: 13px 0; font-size: 0.83rem; font-weight: 800; }
+.advanced-controls output { color: var(--blue); }
+.advanced-controls input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--blue); }
 .editor-group > label:not(.text-field) { display: grid; grid-template-columns: 1fr auto; gap: 7px 14px; align-items: center; margin: 13px 0; font-size: 0.83rem; font-weight: 800; }
 .editor-group output { color: var(--blue); }
 .editor-group input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--blue); }
