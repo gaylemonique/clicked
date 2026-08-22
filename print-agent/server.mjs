@@ -86,7 +86,7 @@ app.post("/print", async (request, response) => {
 });
 
 app.listen(port, "127.0.0.1", () => {
-  console.log(`Thermal print agent listening at http://127.0.0.1:${port}`);
+  console.log(`Clicked! print agent listening at http://127.0.0.1:${port}`);
   void discoverPrinter().then((printer) => {
     if (printer.ready) console.log(`Auto-detected ${printer.name} (${printer.mode}).`);
     else console.log("Waiting for a POS-58 / JK-5802H USB printer. Hot-plug detection is active.");

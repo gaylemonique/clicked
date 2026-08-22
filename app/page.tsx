@@ -39,7 +39,7 @@ const DEFAULT_SETTINGS: EditSettings = {
   spacing: 8,
   cropY: 50,
   border: true,
-  caption: "PHOTOBOOTH",
+  caption: "CLICKED!",
 };
 
 const PRINT_AGENT_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://localhost:3421/print";
@@ -129,7 +129,7 @@ async function buildReceipt(photos: string[], settings: EditSettings) {
   context.fillStyle = "#000";
   context.textAlign = "center";
   context.font = "900 25px Arial";
-  context.fillText(settings.caption.trim().slice(0, 28) || "PHOTOBOOTH", width / 2, footerTop + 42);
+  context.fillText(settings.caption.trim().slice(0, 28) || "CLICKED!", width / 2, footerTop + 42);
   context.font = "700 15px Arial";
   context.fillText(formatDate(), width / 2, footerTop + 69);
   context.fillRect(width / 2 - 24, footerTop + 86, 48, 4);
@@ -151,7 +151,7 @@ function Progress({ screen }: { screen: Screen }) {
   const steps = ["Layout", "Camera", "Edit", "Print"];
   const active = screen === "welcome" ? -1 : screen === "layout" ? 0 : screen === "camera" ? 1 : screen === "preview" ? 2 : 3;
   return (
-    <ol className="progress" aria-label="Photobooth progress">
+    <ol className="progress" aria-label="Clicked! progress">
       {steps.map((step, index) => (
         <li key={step} className={index === active ? "is-active" : index < active ? "is-done" : ""}>
           <span>{index < active ? <Check size={13} strokeWidth={3} /> : index + 1}</span>
@@ -183,7 +183,7 @@ function ThermalPreview({ photos, settings }: { photos: string[]; settings: Edit
         ))}
       </div>
       <footer className="receipt-footer">
-        <strong>{settings.caption.trim() || "PHOTOBOOTH"}</strong>
+        <strong>{settings.caption.trim() || "CLICKED!"}</strong>
         <span>{formatDate()}</span>
         <i aria-hidden="true" />
       </footer>
@@ -392,7 +392,7 @@ export default function Home() {
       <header className="topbar">
         <button className="wordmark" onClick={startOver} aria-label="Return to start">
           <Aperture size={25} strokeWidth={2.6} />
-          <span>THERMAL<br />PHOTOBOOTH</span>
+          <span>CLICKED!</span>
         </button>
         {screen !== "welcome" && <Progress screen={screen} />}
         {screen !== "welcome" && screen !== "complete" ? (
@@ -411,7 +411,7 @@ export default function Home() {
             <h1>MAKE A<br /><em>MOMENT</em><br />YOU CAN HOLD.</h1>
             <p>Pick a strip, strike a pose, and print your photos on a tiny 58mm receipt.</p>
             <button className="primary-button hero-button" disabled={printerConnection.status !== "ready"} onClick={() => setScreen("layout")}>
-              {printerConnection.status === "ready" ? "Start photobooth" : printerConnection.status === "checking" ? "Finding printer…" : "Printer not connected"} <ArrowRight size={22} />
+              {printerConnection.status === "ready" ? "Start taking photos" : printerConnection.status === "checking" ? "Finding printer…" : "Printer not connected"} <ArrowRight size={22} />
             </button>
             {printerConnection.status === "offline" && <p className="printer-guidance" role="status">Plug in and switch on the POS-58 printer. This screen unlocks automatically.</p>}
             <div className="welcome-details" aria-label="How it works">

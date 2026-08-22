@@ -10,7 +10,7 @@ Event guests and walk-up customers use this on a shared, full-screen Windows kio
 
 ## Product Purpose
 
-Thermal Photobooth turns a short webcam session into a tactile 58mm monochrome photo strip and sends it directly to a locally attached JK-5802H printer. Success means a guest can choose a layout, follow automatic countdowns, approve the generated receipt, print once, and reset safely for the next person.
+Clicked! turns a short webcam session into a tactile 58mm monochrome photo strip and sends it directly to a locally attached JK-5802H printer. Success means a guest can choose a layout, follow automatic countdowns, approve the generated receipt, print once, and reset safely for the next person.
 
 ## Brand Personality
 

@@ -1,4 +1,4 @@
-# Thermal Photobooth
+# Clicked!
 
 A full-screen, browser-based thermal photobooth for a locally connected JK-5802H printer. Guests choose a 1, 2, 4, or 6-photo strip, complete one automatic camera sequence, make a few print-safe edits, and send a 384-dot monochrome PNG to a local print agent.
 

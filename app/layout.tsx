@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Thermal Photobooth",
+  title: "Clicked!",
   description: "Take a photo, make a thermal strip, and print it.",
 };
 

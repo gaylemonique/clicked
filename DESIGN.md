@@ -1,5 +1,5 @@
 ---
-name: Thermal Photobooth
+name: Clicked!
 description: A playful kiosk that turns webcam moments into 58mm thermal keepsakes.
 colors:
   booth-ink: "oklch(0.16 0.025 255)"
@@ -51,7 +51,7 @@ components:
     padding: "14px 20px"
 ---
 
-# Design System: Thermal Photobooth
+# Design System: Clicked!
 
 ## 1. Overview
 
