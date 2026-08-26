@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: EditSettings = {
   caption: "CLICKED!",
 };
 
-const PRINT_AGENT_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://localhost:3421/print";
+const PRINT_AGENT_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://127.0.0.1:3421/print";
 const PRINT_AGENT_HEALTH_URL = PRINT_AGENT_URL.replace(/\/print\/?$/, "/health");
 
 const wait = (milliseconds: number) =>
@@ -399,7 +399,7 @@ export default function Home() {
           <button className="text-button" onClick={startOver}><RotateCcw size={17} /> Start over</button>
         ) : (
           <span className={`kiosk-chip is-${printerConnection.status}`} title={printerConnection.name}>
-            <span /> {printerConnection.status === "ready" ? "Printer ready" : printerConnection.status === "checking" ? "Finding printer" : "Connect printer"}
+            <span /> {printerConnection.status === "ready" ? "Printer ready" : printerConnection.status === "checking" ? "Finding printer" : "Printer access needed"}
           </span>
         )}
       </header>
@@ -411,9 +411,9 @@ export default function Home() {
             <h1>MAKE A<br /><em>MOMENT</em><br />YOU CAN HOLD.</h1>
             <p>Pick a strip, strike a pose, and print your photos on a tiny 58mm receipt.</p>
             <button className="primary-button hero-button" disabled={printerConnection.status !== "ready"} onClick={() => setScreen("layout")}>
-              {printerConnection.status === "ready" ? "Start taking photos" : printerConnection.status === "checking" ? "Finding printer…" : "Printer not connected"} <ArrowRight size={22} />
+              {printerConnection.status === "ready" ? "Start taking photos" : printerConnection.status === "checking" ? "Finding printer…" : "Waiting for printer access"} <ArrowRight size={22} />
             </button>
-            {printerConnection.status === "offline" && <p className="printer-guidance" role="status">Plug in and switch on the POS-58 printer. This screen unlocks automatically.</p>}
+            {printerConnection.status === "offline" && <p className="printer-guidance" role="status">Allow “Local Network Access” in the browser, then make sure the Clicked! print agent and POS-58 printer are on. Detection retries automatically.</p>}
             <div className="welcome-details" aria-label="How it works">
               <span><b>01</b> Choose</span><span><b>02</b> Pose</span><span><b>03</b> Print</span>
             </div>

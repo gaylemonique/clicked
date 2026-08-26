@@ -1,9 +1,9 @@
-import cors from "cors";
 import express from "express";
 import { mkdir, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
+import { configureLocalAgentAccess } from "./http-access.mjs";
 import { discoverPrinter, pngToEscPos, writeDirectUsb } from "./printer.mjs";
 
 const port = Number(process.env.PRINT_AGENT_PORT ?? 3421);
@@ -14,7 +14,7 @@ const allowQueueOnly = process.env.ALLOW_PRINT_QUEUE === "true";
 
 const app = express();
 app.disable("x-powered-by");
-app.use(cors({ origin: [/^http:\/\/localhost(?::\d+)?$/, /^http:\/\/127\.0\.0\.1(?::\d+)?$/] }));
+configureLocalAgentAccess(app);
 app.use(express.json({ limit: "18mb" }));
 
 function runPrintCommand(filePath) {

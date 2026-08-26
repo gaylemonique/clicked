@@ -22,7 +22,9 @@ If an uncommon printer only reports the generic name `USB printer`, set `THERMAL
 
 ## Print contract
 
-`POST http://localhost:3421/print` accepts JSON with a 384-dot PNG data URL and exactly one copy. `GET /health` reports live USB detection, readiness, printer identity, and connection mode.
+`POST http://127.0.0.1:3421/print` accepts JSON with a 384-dot PNG data URL and exactly one copy. `GET /health` reports live USB detection, readiness, printer identity, and connection mode.
+
+The local agent allows the production kiosk at `https://clickedph.vercel.app` to reach the loopback service and answers the browser's private-network preflight. If the kiosk moves to a custom domain, add it to `PRINT_AGENT_ALLOWED_ORIGINS` as a comma-separated HTTPS origin. The browser may ask once for local-network access; allow it so the deployed kiosk can detect and print to the USB device.
 
 ## Automatic thermal lighting
 
