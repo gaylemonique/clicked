@@ -19,6 +19,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { resolvePrintAgentUrl } from "./print-agent-url";
 
 type Screen = "welcome" | "layout" | "camera" | "preview" | "printing" | "complete";
 type LayoutCount = 1 | 2 | 4 | 6;
@@ -42,7 +43,7 @@ const DEFAULT_SETTINGS: EditSettings = {
   caption: "CLICKED!",
 };
 
-const PRINT_AGENT_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://127.0.0.1:3421/print";
+const PRINT_AGENT_URL = resolvePrintAgentUrl(process.env.NEXT_PUBLIC_PRINT_AGENT_URL);
 const PRINT_AGENT_HEALTH_URL = PRINT_AGENT_URL.replace(/\/print\/?$/, "/health");
 
 const wait = (milliseconds: number) =>
